@@ -7,4 +7,8 @@ public class IncomeCategory extends Category {
         super(name);
         this.amount = amount;
     }
+
+    double amount(){
+        return amount;
+    }
 }
