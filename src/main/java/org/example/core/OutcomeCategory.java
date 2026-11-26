@@ -9,4 +9,12 @@ public class OutcomeCategory extends Category {
         this.monthlyBudget = monthlyBudget;
         this.remainingBudget = remainingBudget;
     }
+
+    double getMonthlyBudget(){
+        return monthlyBudget;
+    }
+
+    double getRemainingBudget(){
+        return remainingBudget;
+    }
 }
