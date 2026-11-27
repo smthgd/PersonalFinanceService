@@ -69,22 +69,30 @@ public class Wallet {
         findCategory(outcomeCategories, name).setBudget(amount);
     }
 
-    public void printWallet() {
-        System.out.println("Общий доход: " + income.toPlainString());
-        System.out.println("Доходы по категориям:");
+    public String report() {
+        StringBuilder report = new StringBuilder();
+        report.append("Общий доход: ").append(income.toPlainString()).append('\n');
+        report.append("Доходы по категориям:\n");
         for (IncomeCategory category : incomeCategories.values()) {
-            System.out.println("\t" + category.name() + ": " + category.amount().toPlainString());
+            report.append('\t').append(category.name()).append(": ")
+                    .append(category.amount().toPlainString()).append('\n');
         }
-        System.out.println("Общие расходы: " + outcome.toPlainString());
-        System.out.println("Бюджет по категориям:");
+
+        report.append("Общие расходы: ").append(outcome.toPlainString()).append('\n');
+        report.append("Расходы и бюджеты по категориям:\n");
         for (OutcomeCategory category : outcomeCategories.values()) {
-            if (category.getMonthlyBudget() == null) {
-                System.out.println("\t" + category.name() + ": бюджет не установлен");
+            report.append('\t').append(category.name()).append(": ")
+                    .append(category.spent().toPlainString());
+            BigDecimal budget = category.getMonthlyBudget();
+            if (budget == null) {
+                report.append(", бюджет не установлен");
             } else {
-                System.out.println("\t" + category.name() + ": " + category.getMonthlyBudget().toPlainString()
-                        + ", Оставшийся бюджет: " + category.getRemainingBudget().toPlainString());
+                report.append(", бюджет: ").append(budget.toPlainString())
+                        .append(", оставшийся лимит: ").append(category.getRemainingBudget().toPlainString());
             }
+            report.append('\n');
         }
+        return report.toString();
     }
 
     private static String categoryName(String name) {

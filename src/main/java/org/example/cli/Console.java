@@ -4,8 +4,14 @@ import org.example.core.AuthService;
 import org.example.core.User;
 import org.example.core.Wallet;
 
+import java.io.IOException;
 import java.io.PrintStream;
 import java.math.BigDecimal;
+import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.Locale;
 import java.util.Scanner;
@@ -27,6 +33,8 @@ public final class Console {
                     income — добавить доход
                     expense — добавить расход
                     budget — установить бюджет категории расходов
+                    report — вывести отчёт по кошельку
+                    report-file — записать отчёт в новый файл
                     exit — завершить приложение
                 """);
 
@@ -95,8 +103,41 @@ public final class Console {
                         updateWallet(action, currentUser.wallet(), input, output);
                     }
                 }
+                case "report", "report-file" -> {
+                    if (currentUser == null) {
+                        output.println("Сначала войдите в учётную запись.");
+                    } else if (action.equals("report")) {
+                        output.print(currentUser.wallet().report());
+                    } else {
+                        writeReport(currentUser.wallet(), input, output);
+                    }
+                }
                 default -> output.println("Неизвестная команда.");
             }
+        }
+    }
+
+    private static void writeReport(Wallet wallet, Scanner input, PrintStream output) {
+        output.println("Путь к новому файлу:");
+        if (!input.hasNextLine()) {
+            return;
+        }
+        String filename = input.nextLine();
+        if (filename.isBlank()) {
+            output.println("Введите путь к файлу.");
+            return;
+        }
+
+        try {
+            Path path = Path.of(filename);
+            Files.writeString(path, wallet.report(), StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE);
+            output.println("Отчёт записан в " + path + ".");
+        } catch (InvalidPathException e) {
+            output.println("Некорректный путь к файлу.");
+        } catch (FileAlreadyExistsException e) {
+            output.println("Файл уже существует. Укажите другой путь.");
+        } catch (IOException e) {
+            output.println("Не удалось записать отчёт: " + e.getMessage());
         }
     }
 
