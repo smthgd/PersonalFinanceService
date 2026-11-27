@@ -1,6 +1,7 @@
 package org.example.core;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -8,6 +9,7 @@ import java.util.Map;
 public class Wallet {
     private BigDecimal income;
     private BigDecimal outcome;
+    private final List<Transaction> transactions = new ArrayList<>();
     private final Map<String, IncomeCategory> incomeCategories = new LinkedHashMap<>();
     private final Map<String, OutcomeCategory> outcomeCategories = new LinkedHashMap<>();
 
@@ -40,14 +42,24 @@ public class Wallet {
 
     public void addIncome(String name, BigDecimal amount) {
         requirePositiveAmount(amount);
-        findCategory(incomeCategories, name).addIncome(amount);
-        income = income.add(amount);
+        IncomeCategory category = findCategory(incomeCategories, name);
+        BigDecimal total = income.add(amount);
+        category.addIncome(amount);
+        income = total;
+        transactions.add(new Transaction(Transaction.Type.INCOME, category.name(), amount));
     }
 
     public void addExpense(String name, BigDecimal amount) {
         requirePositiveAmount(amount);
-        findCategory(outcomeCategories, name).addExpense(amount);
-        outcome = outcome.add(amount);
+        OutcomeCategory category = findCategory(outcomeCategories, name);
+        BigDecimal total = outcome.add(amount);
+        category.addExpense(amount);
+        outcome = total;
+        transactions.add(new Transaction(Transaction.Type.EXPENSE, category.name(), amount));
+    }
+
+    public List<Transaction> transactions() {
+        return List.copyOf(transactions);
     }
 
     public void setBudget(String name, BigDecimal amount) {
