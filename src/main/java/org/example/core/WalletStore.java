@@ -1,11 +1,18 @@
 package org.example.core;
 
-import java.util.UUID;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.IOException;
 
 public interface WalletStore {
-    boolean addUser(UUID user);
+    boolean exists(String login) throws IOException;
 
-    boolean hasUser(UUID user);
+    BufferedReader open(String login) throws IOException;
 
-    void removeUser(UUID user);
+    void save(String login, ContentWriter writer) throws IOException;
+
+    @FunctionalInterface
+    interface ContentWriter {
+        void write(BufferedWriter output) throws IOException;
+    }
 }

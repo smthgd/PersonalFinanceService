@@ -2,10 +2,17 @@ package org.example.core;
 
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
+import java.util.Base64;
 import java.util.UUID;
+
+import static org.example.core.WalletFileFormat.requireLine;
+import static org.example.core.WalletFileFormat.writeLine;
 
 public final class User {
     private static final SecureRandom RANDOM = new SecureRandom();
@@ -24,6 +31,35 @@ public final class User {
         this.salt = new byte[16];
         RANDOM.nextBytes(salt);
         this.passwordHash = hash(password, salt);
+    }
+
+    private User(UUID uuid, String login, byte[] salt, byte[] passwordHash) {
+        this.uuid = uuid;
+        this.login = login;
+        this.salt = salt;
+        this.passwordHash = passwordHash;
+    }
+
+    static User readCredentials(String login, BufferedReader input) throws IOException {
+        if (!"personal-finance-v1".equals(input.readLine()) || !login.equals(input.readLine())) {
+            throw new IOException("Неизвестный формат файла или неверный логин.");
+        }
+        UUID uuid = UUID.fromString(requireLine(input));
+        byte[] salt = Base64.getDecoder().decode(requireLine(input));
+        byte[] hash = Base64.getDecoder().decode(requireLine(input));
+        if (salt.length != 16 || hash.length != HASH_BITS / Byte.SIZE) {
+            throw new IOException("Повреждены учётные данные.");
+        }
+        return new User(uuid, login, salt, hash);
+    }
+
+    void write(BufferedWriter output) throws IOException {
+        writeLine(output, "personal-finance-v1");
+        writeLine(output, login);
+        writeLine(output, uuid.toString());
+        writeLine(output, Base64.getEncoder().encodeToString(salt));
+        writeLine(output, Base64.getEncoder().encodeToString(passwordHash));
+        wallet.writeTo(output);
     }
 
     public UUID uuid() {

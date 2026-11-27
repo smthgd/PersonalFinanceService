@@ -6,6 +6,7 @@ import org.example.core.Wallet;
 
 import java.io.IOException;
 import java.io.PrintStream;
+import java.io.UncheckedIOException;
 import java.math.BigDecimal;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
@@ -25,8 +26,7 @@ public final class Console {
     private Console() {
     }
 
-    public static void run(Scanner input, PrintStream output) {
-        AuthService auth = new AuthService();
+    public static void run(Scanner input, PrintStream output, AuthService auth) {
         User currentUser = null;
         output.println("""
                 Здравствуйте! Доступные команды:
@@ -59,7 +59,10 @@ public final class Console {
             String action = command[0].toLowerCase(Locale.ROOT);
             switch (action) {
                 case "exit" -> {
-                    return;
+                    if (saveWallets(auth, output)) {
+                        return;
+                    }
+                    output.println("После устранения ошибки повторите exit.");
                 }
                 case "logout" -> {
                     if (currentUser == null) {
@@ -77,12 +80,12 @@ public final class Console {
 
                     output.println("Логин:");
                     if (!input.hasNextLine()) {
-                        return;
+                        break;
                     }
                     String login = input.nextLine();
                     output.println("Пароль:");
                     if (!input.hasNextLine()) {
-                        return;
+                        break;
                     }
                     char[] password = input.nextLine().toCharArray();
                     try {
@@ -97,7 +100,7 @@ public final class Console {
                                 output.println("Вы вошли как " + currentUser.login() + ".");
                             }
                         }
-                    } catch (IllegalArgumentException e) {
+                    } catch (IllegalArgumentException | IllegalStateException | UncheckedIOException e) {
                         output.println(e.getMessage());
                     } finally {
                         Arrays.fill(password, '\0');
@@ -128,6 +131,20 @@ public final class Console {
                 }
                 default -> output.println("Неизвестная команда.");
             }
+        }
+        saveWallets(auth, output);
+    }
+
+    private static boolean saveWallets(AuthService auth, PrintStream output) {
+        try {
+            auth.saveWallets();
+            return true;
+        } catch (IOException e) {
+            output.println(e.getMessage());
+            for (Throwable detail : e.getSuppressed()) {
+                output.println(detail.getMessage());
+            }
+            return false;
         }
     }
 

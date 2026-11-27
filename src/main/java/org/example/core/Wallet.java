@@ -1,5 +1,8 @@
 package org.example.core;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -9,6 +12,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
+
+import static org.example.core.WalletFileFormat.requireLine;
+import static org.example.core.WalletFileFormat.writeLine;
 
 public class Wallet {
     private BigDecimal income;
@@ -108,6 +114,53 @@ public class Wallet {
             }
         }
         return total;
+    }
+
+    void writeTo(BufferedWriter output) throws IOException {
+        writeLine(output, Integer.toString(incomeCategories.size()));
+        for (String category : incomeCategories.keySet()) {
+            writeLine(output, category);
+        }
+
+        writeLine(output, Integer.toString(outcomeCategories.size()));
+        for (OutcomeCategory category : outcomeCategories.values()) {
+            writeLine(output, category.name());
+            BigDecimal budget = category.getMonthlyBudget();
+            writeLine(output, budget == null ? "" : budget.toPlainString());
+        }
+
+        writeLine(output, Integer.toString(transactions.size()));
+        for (Transaction transaction : transactions) {
+            writeLine(output, transaction.type().name());
+            writeLine(output, transaction.category());
+            writeLine(output, transaction.amount().toPlainString());
+        }
+    }
+
+    void readFrom(BufferedReader input) throws IOException {
+        for (int count = WalletFileFormat.readCount(input); count > 0; count--) {
+            createIncomeCategory(requireLine(input));
+        }
+        for (int count = WalletFileFormat.readCount(input); count > 0; count--) {
+            String category = requireLine(input);
+            createExpenseCategory(category);
+            String budget = requireLine(input);
+            if (!budget.isEmpty()) {
+                setBudget(category, new BigDecimal(budget));
+            }
+        }
+        for (int count = WalletFileFormat.readCount(input); count > 0; count--) {
+            Transaction.Type type = Transaction.Type.valueOf(requireLine(input));
+            String category = requireLine(input);
+            BigDecimal amount = new BigDecimal(requireLine(input));
+            switch (type) {
+                case INCOME -> addIncome(category, amount);
+                case EXPENSE -> addExpense(category, amount);
+            }
+        }
+        if (input.readLine() != null) {
+            throw new IOException("Обнаружены лишние данные в файле кошелька.");
+        }
     }
 
     public String report() {
