@@ -50,6 +50,59 @@ public class Wallet {
         addCategory(outcomeCategories, new OutcomeCategory(name, null, BigDecimal.ZERO));
     }
 
+    public void renameIncomeCategory(String name, String newName) {
+        renameCategory(incomeCategories, Transaction.Type.INCOME, name, newName);
+    }
+
+    public void renameExpenseCategory(String name, String newName) {
+        renameCategory(outcomeCategories, Transaction.Type.EXPENSE, name, newName);
+    }
+
+    public void deleteIncomeCategory(String name) {
+        IncomeCategory category = findCategory(incomeCategories, name);
+        requireUnusedCategory(category.name(), Transaction.Type.INCOME, category.amount());
+        incomeCategories.remove(category.name());
+    }
+
+    public void deleteExpenseCategory(String name) {
+        OutcomeCategory category = findCategory(outcomeCategories, name);
+        requireUnusedCategory(category.name(), Transaction.Type.EXPENSE, category.spent());
+        outcomeCategories.remove(category.name());
+    }
+
+    private <T extends Category> void renameCategory(
+            Map<String, T> categories, Transaction.Type type, String name, String newName) {
+        T category = findCategory(categories, name);
+        String oldName = category.name();
+        String renamed = categoryName(newName);
+        if (oldName.equals(renamed)) {
+            return;
+        }
+        if (categories.containsKey(renamed)) {
+            throw new IllegalArgumentException("Категория уже существует: " + renamed);
+        }
+
+        Map<String, T> updated = new LinkedHashMap<>();
+        categories.forEach((key, value) -> updated.put(key.equals(oldName) ? renamed : key, value));
+        category.rename(renamed);
+        categories.clear();
+        categories.putAll(updated);
+
+        transactions.replaceAll(transaction -> {
+            if (transaction.type() == type && transaction.category().equals(oldName)) {
+                return new Transaction(type, renamed, transaction.amount());
+            }
+            return transaction;
+        });
+    }
+
+    private void requireUnusedCategory(String name, Transaction.Type type, BigDecimal total) {
+        if (total.signum() != 0 || transactions.stream()
+                .anyMatch(transaction -> transaction.type() == type && transaction.category().equals(name))) {
+            throw new IllegalArgumentException("Нельзя удалить категорию с операциями: " + name);
+        }
+    }
+
     public void addIncome(String name, BigDecimal amount) {
         requirePositiveAmount(amount);
         IncomeCategory category = findCategory(incomeCategories, name);

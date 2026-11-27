@@ -1,7 +1,7 @@
 package org.example.core;
 
 public abstract class Category {
-    private final String name;
+    private String name;
 
     public Category(String name) {
         this.name = name;
@@ -9,5 +9,9 @@ public abstract class Category {
 
     String name() {
         return name;
+    }
+
+    void rename(String name) {
+        this.name = name;
     }
 }

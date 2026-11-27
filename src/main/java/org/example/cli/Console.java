@@ -36,6 +36,10 @@ public final class Console {
                     logout — выйти из учётной записи
                     income-category — создать категорию доходов
                     expense-category — создать категорию расходов
+                    rename-income-category — переименовать категорию доходов
+                    rename-expense-category — переименовать категорию расходов
+                    delete-income-category — удалить категорию доходов без операций
+                    delete-expense-category — удалить категорию расходов без операций
                     income — добавить доход
                     expense — добавить расход
                     budget — установить бюджет категории расходов
@@ -107,7 +111,8 @@ public final class Console {
                         Arrays.fill(password, '\0');
                     }
                 }
-                case "income-category", "expense-category", "income", "expense", "budget" -> {
+                case "income-category", "expense-category", "rename-income-category", "rename-expense-category",
+                     "delete-income-category", "delete-expense-category", "income", "expense", "budget" -> {
                     if (currentUser == null) {
                         output.println("Сначала войдите в учётную запись.");
                     } else {
@@ -213,6 +218,20 @@ public final class Console {
             switch (command) {
                 case "income-category" -> wallet.createIncomeCategory(name);
                 case "expense-category" -> wallet.createExpenseCategory(name);
+                case "delete-income-category" -> wallet.deleteIncomeCategory(name);
+                case "delete-expense-category" -> wallet.deleteExpenseCategory(name);
+                case "rename-income-category", "rename-expense-category" -> {
+                    output.println("Новое название категории:");
+                    if (!input.hasNextLine()) {
+                        return;
+                    }
+                    String newName = input.nextLine();
+                    if (command.equals("rename-income-category")) {
+                        wallet.renameIncomeCategory(name, newName);
+                    } else {
+                        wallet.renameExpenseCategory(name, newName);
+                    }
+                }
                 case "income", "expense", "budget" -> {
                     output.println("Сумма (например, 1500.50):");
                     if (!input.hasNextLine()) {
