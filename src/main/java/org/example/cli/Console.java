@@ -17,8 +17,11 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Scanner;
+import java.util.regex.Pattern;
 
 public final class Console {
+    private static final Pattern DECIMAL_AMOUNT =
+            Pattern.compile("[+-]?(?:[0-9]+(?:[.,][0-9]*)?|[.,][0-9]+)");
     private Console() {
     }
 
@@ -76,14 +79,14 @@ public final class Console {
                     if (!input.hasNextLine()) {
                         return;
                     }
-                    String login = input.nextLine().strip();
+                    String login = input.nextLine();
                     output.println("Пароль:");
                     if (!input.hasNextLine()) {
                         return;
                     }
                     char[] password = input.nextLine().toCharArray();
                     try {
-                        if (command[0].equalsIgnoreCase("register")) {
+                        if (action.equals("register")) {
                             auth.register(login, password);
                             output.println("Учётная запись создана. Для входа введите login.");
                         } else {
@@ -182,6 +185,10 @@ public final class Console {
             return;
         }
         String name = input.nextLine();
+        if (name.isBlank()) {
+            output.println("Введите название категории.");
+            return;
+        }
         try {
             switch (command) {
                 case "income-category" -> wallet.createIncomeCategory(name);
@@ -191,7 +198,12 @@ public final class Console {
                     if (!input.hasNextLine()) {
                         return;
                     }
-                    BigDecimal amount = new BigDecimal(input.nextLine().strip().replace(',', '.'));
+                    String value = input.nextLine().strip();
+                    if (!DECIMAL_AMOUNT.matcher(value).matches()) {
+                        output.println("Введите сумму десятичным числом, например 1500.50 или 1500,50.");
+                        return;
+                    }
+                    BigDecimal amount = new BigDecimal(value.replace(',', '.'));
                     switch (command) {
                         case "income" -> wallet.addIncome(name, amount);
                         case "expense" -> wallet.addExpense(name, amount);
@@ -200,8 +212,6 @@ public final class Console {
                 }
             }
             output.println("Изменения сохранены.");
-        } catch (NumberFormatException e) {
-            output.println("Введите корректную сумму.");
         } catch (IllegalArgumentException e) {
             output.println(e.getMessage());
         }

@@ -133,6 +133,9 @@ public class Wallet {
         if (trimmed.isEmpty()) {
             throw new IllegalArgumentException("Введите название категории.");
         }
+        if (trimmed.chars().anyMatch(Character::isISOControl)) {
+            throw new IllegalArgumentException("Название категории содержит управляющий символ.");
+        }
         return trimmed;
     }
 
