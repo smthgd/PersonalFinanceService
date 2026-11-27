@@ -13,6 +13,7 @@ public final class User {
     private static final int HASH_BITS = 256;
 
     private final UUID uuid;
+    private final Wallet wallet = new Wallet(0, 0);
     private final String login;
     private final byte[] salt;
     private final byte[] passwordHash;
@@ -31,6 +32,10 @@ public final class User {
 
     public String login() {
         return login;
+    }
+
+    public Wallet wallet() {
+        return wallet;
     }
 
     boolean matchesPassword(char[] password) {

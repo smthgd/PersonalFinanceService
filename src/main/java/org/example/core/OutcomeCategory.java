@@ -1,20 +1,39 @@
 package org.example.core;
 
-public class OutcomeCategory extends Category {
-    private final double monthlyBudget;
-    private final double remainingBudget;
+import java.math.BigDecimal;
 
-    public OutcomeCategory(String name, double monthlyBudget, double remainingBudget){
-        super(name);
-        this.monthlyBudget = monthlyBudget;
-        this.remainingBudget = remainingBudget;
+public class OutcomeCategory extends Category {
+    private BigDecimal monthlyBudget;
+    private BigDecimal spent;
+
+    public OutcomeCategory(String name, double monthlyBudget, double remainingBudget) {
+        this(name, BigDecimal.valueOf(monthlyBudget),
+                BigDecimal.valueOf(monthlyBudget).subtract(BigDecimal.valueOf(remainingBudget)));
     }
 
-    double getMonthlyBudget(){
+    OutcomeCategory(String name, BigDecimal monthlyBudget, BigDecimal spent) {
+        super(name);
+        this.monthlyBudget = monthlyBudget;
+        this.spent = spent;
+    }
+
+    BigDecimal getMonthlyBudget() {
         return monthlyBudget;
     }
 
-    double getRemainingBudget(){
-        return remainingBudget;
+    BigDecimal spent() {
+        return spent;
+    }
+
+    BigDecimal getRemainingBudget() {
+        return monthlyBudget.subtract(spent);
+    }
+
+    void addExpense(BigDecimal amount) {
+        spent = spent.add(amount);
+    }
+
+    void setBudget(BigDecimal amount) {
+        monthlyBudget = amount;
     }
 }

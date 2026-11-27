@@ -2,8 +2,10 @@ package org.example.cli;
 
 import org.example.core.AuthService;
 import org.example.core.User;
+import org.example.core.Wallet;
 
 import java.io.PrintStream;
+import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Locale;
 import java.util.Scanner;
@@ -20,6 +22,11 @@ public final class Console {
                     register — создать учётную запись
                     login — войти
                     logout — выйти из учётной записи
+                    income-category — создать категорию доходов
+                    expense-category — создать категорию расходов
+                    income — добавить доход
+                    expense — добавить расход
+                    budget — установить бюджет категории расходов
                     exit — завершить приложение
                 """);
 
@@ -34,7 +41,8 @@ public final class Console {
                 continue;
             }
 
-            switch (command[0].toLowerCase(Locale.ROOT)) {
+            String action = command[0].toLowerCase(Locale.ROOT);
+            switch (action) {
                 case "exit" -> {
                     return;
                 }
@@ -80,8 +88,46 @@ public final class Console {
                         Arrays.fill(password, '\0');
                     }
                 }
+                case "income-category", "expense-category", "income", "expense", "budget" -> {
+                    if (currentUser == null) {
+                        output.println("Сначала войдите в учётную запись.");
+                    } else {
+                        updateWallet(action, currentUser.wallet(), input, output);
+                    }
+                }
                 default -> output.println("Неизвестная команда.");
             }
+        }
+    }
+
+    private static void updateWallet(String command, Wallet wallet, Scanner input, PrintStream output) {
+        output.println("Название категории:");
+        if (!input.hasNextLine()) {
+            return;
+        }
+        String name = input.nextLine();
+        try {
+            switch (command) {
+                case "income-category" -> wallet.createIncomeCategory(name);
+                case "expense-category" -> wallet.createExpenseCategory(name);
+                case "income", "expense", "budget" -> {
+                    output.println("Сумма (например, 1500.50):");
+                    if (!input.hasNextLine()) {
+                        return;
+                    }
+                    BigDecimal amount = new BigDecimal(input.nextLine().strip().replace(',', '.'));
+                    switch (command) {
+                        case "income" -> wallet.addIncome(name, amount);
+                        case "expense" -> wallet.addExpense(name, amount);
+                        case "budget" -> wallet.setBudget(name, amount);
+                    }
+                }
+            }
+            output.println("Изменения сохранены.");
+        } catch (NumberFormatException e) {
+            output.println("Введите корректную сумму.");
+        } catch (IllegalArgumentException e) {
+            output.println(e.getMessage());
         }
     }
 }
