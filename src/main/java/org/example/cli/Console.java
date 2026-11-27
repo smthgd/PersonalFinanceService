@@ -23,6 +23,7 @@ import java.util.regex.Pattern;
 public final class Console {
     private static final Pattern DECIMAL_AMOUNT =
             Pattern.compile("[+-]?(?:[0-9]+(?:[.,][0-9]*)?|[.,][0-9]+)");
+
     private Console() {
     }
 
@@ -160,7 +161,9 @@ public final class Console {
                     if (categories.isEmpty()) {
                         total = income ? wallet.totalIncome() : wallet.totalExpenses();
                     } else {
-                        total = income ? wallet.incomeByCategories(categories) : wallet.expensesByCategories(categories);
+                        total = income
+                                ? wallet.incomeByCategories(categories)
+                                : wallet.expensesByCategories(categories);
                     }
                     output.println((income ? "Сумма доходов: " : "Сумма расходов: ") + total.toPlainString());
                 } catch (IllegalArgumentException e) {
