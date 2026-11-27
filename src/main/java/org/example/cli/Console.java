@@ -3,6 +3,7 @@ package org.example.cli;
 import org.example.core.AuthService;
 import org.example.core.User;
 import org.example.core.Wallet;
+import org.example.infrastructure.WalletCsv;
 
 import java.io.IOException;
 import java.io.PrintStream;
@@ -47,6 +48,8 @@ public final class Console {
                     sum-expenses — подсчитать расходы
                     report — вывести отчёт по кошельку
                     report-file — записать отчёт в новый файл
+                    export-csv — выгрузить кошелёк в новый CSV-файл
+                    import-csv — загрузить CSV в пустой кошелёк
                     exit — завершить приложение
                 """);
 
@@ -135,6 +138,13 @@ public final class Console {
                         writeReport(currentUser.wallet(), input, output);
                     }
                 }
+                case "export-csv", "import-csv" -> {
+                    if (currentUser == null) {
+                        output.println("Сначала войдите в учётную запись.");
+                    } else {
+                        transferCsv(currentUser, action.equals("import-csv"), input, output);
+                    }
+                }
                 default -> output.println("Неизвестная команда.");
             }
         }
@@ -201,6 +211,37 @@ public final class Console {
             output.println("Файл уже существует. Укажите другой путь.");
         } catch (IOException e) {
             output.println("Не удалось записать отчёт: " + e.getMessage());
+        }
+    }
+
+    private static void transferCsv(User user, boolean importing, Scanner input, PrintStream output) {
+        output.println(importing ? "Путь к CSV-файлу:" : "Путь к новому CSV-файлу:");
+        if (!input.hasNextLine()) {
+            return;
+        }
+        String filename = input.nextLine();
+        if (filename.isBlank()) {
+            output.println("Введите путь к файлу.");
+            return;
+        }
+
+        try {
+            Path path = Path.of(filename);
+            if (importing) {
+                user.importWallet(WalletCsv.importFrom(path));
+                output.println("Кошелёк загружен из CSV.");
+            } else {
+                WalletCsv.exportTo(path, user.wallet());
+                output.println("Кошелёк выгружен в " + path + ".");
+            }
+        } catch (InvalidPathException e) {
+            output.println("Некорректный путь к файлу.");
+        } catch (FileAlreadyExistsException e) {
+            output.println("Файл уже существует. Укажите другой путь.");
+        } catch (IllegalStateException e) {
+            output.println(e.getMessage());
+        } catch (IOException e) {
+            output.println("Не удалось " + (importing ? "загрузить" : "выгрузить") + " CSV: " + e.getMessage());
         }
     }
 

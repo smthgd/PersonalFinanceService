@@ -10,6 +10,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 
@@ -123,6 +124,23 @@ public class Wallet {
 
     public List<Transaction> transactions() {
         return List.copyOf(transactions);
+    }
+
+    public List<String> incomeCategoryNames() {
+        return List.copyOf(incomeCategories.keySet());
+    }
+
+    public List<String> expenseCategoryNames() {
+        return List.copyOf(outcomeCategories.keySet());
+    }
+
+    public Optional<BigDecimal> budgetFor(String name) {
+        return Optional.ofNullable(findCategory(outcomeCategories, name).getMonthlyBudget());
+    }
+
+    public boolean isEmpty() {
+        return incomeCategories.isEmpty() && outcomeCategories.isEmpty() && transactions.isEmpty()
+                && income.signum() == 0 && outcome.signum() == 0;
     }
 
     public void setBudget(String name, BigDecimal amount) {

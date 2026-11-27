@@ -9,6 +9,7 @@ import java.security.GeneralSecurityException;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
 import java.util.Base64;
+import java.util.Objects;
 import java.util.UUID;
 
 import static org.example.core.WalletFileFormat.requireLine;
@@ -20,7 +21,7 @@ public final class User {
     private static final int HASH_BITS = 256;
 
     private final UUID uuid;
-    private final Wallet wallet = new Wallet(0, 0);
+    private Wallet wallet = new Wallet(0, 0);
     private final String login;
     private final byte[] salt;
     private final byte[] passwordHash;
@@ -72,6 +73,13 @@ public final class User {
 
     public Wallet wallet() {
         return wallet;
+    }
+
+    public void importWallet(Wallet imported) {
+        if (!wallet.isEmpty()) {
+            throw new IllegalStateException("Импорт доступен только в пустой кошелёк.");
+        }
+        wallet = Objects.requireNonNull(imported);
     }
 
     boolean matchesPassword(char[] password) {
