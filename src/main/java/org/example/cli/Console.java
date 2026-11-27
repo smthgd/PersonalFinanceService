@@ -212,6 +212,19 @@ public final class Console {
                 }
             }
             output.println("Изменения сохранены.");
+            if (command.equals("expense") || command.equals("budget")) {
+                BigDecimal overrun = wallet.budgetOverrun(name);
+                if (overrun.signum() > 0) {
+                    output.println("Внимание: бюджет категории «" + name.strip()
+                            + "» превышен на " + overrun.toPlainString() + ".");
+                }
+            }
+            if (command.equals("expense")) {
+                BigDecimal deficit = wallet.totalExpenses().subtract(wallet.totalIncome());
+                if (deficit.signum() > 0) {
+                    output.println("Внимание: общие расходы превышают доходы на " + deficit.toPlainString() + ".");
+                }
+            }
         } catch (IllegalArgumentException e) {
             output.println(e.getMessage());
         }

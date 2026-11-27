@@ -73,6 +73,14 @@ public class Wallet {
         findCategory(outcomeCategories, name).setBudget(amount);
     }
 
+    public BigDecimal budgetOverrun(String name) {
+        OutcomeCategory category = findCategory(outcomeCategories, name);
+        if (category.getMonthlyBudget() == null) {
+            return BigDecimal.ZERO;
+        }
+        return category.getRemainingBudget().negate().max(BigDecimal.ZERO);
+    }
+
     public BigDecimal totalIncome() {
         return income;
     }
