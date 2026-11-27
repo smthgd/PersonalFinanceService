@@ -12,7 +12,9 @@ import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Locale;
 import java.util.Scanner;
 
@@ -33,6 +35,8 @@ public final class Console {
                     income — добавить доход
                     expense — добавить расход
                     budget — установить бюджет категории расходов
+                    sum-income — подсчитать доходы
+                    sum-expenses — подсчитать расходы
                     report — вывести отчёт по кошельку
                     report-file — записать отчёт в новый файл
                     exit — завершить приложение
@@ -103,6 +107,13 @@ public final class Console {
                         updateWallet(action, currentUser.wallet(), input, output);
                     }
                 }
+                case "sum-income", "sum-expenses" -> {
+                    if (currentUser == null) {
+                        output.println("Сначала войдите в учётную запись.");
+                    } else {
+                        printSum(currentUser.wallet(), action.equals("sum-income"), input, output);
+                    }
+                }
                 case "report", "report-file" -> {
                     if (currentUser == null) {
                         output.println("Сначала войдите в учётную запись.");
@@ -114,6 +125,30 @@ public final class Console {
                 }
                 default -> output.println("Неизвестная команда.");
             }
+        }
+    }
+
+    private static void printSum(Wallet wallet, boolean income, Scanner input, PrintStream output) {
+        output.println("Введите названия категорий, каждое с новой строки. Пустая строка завершает ввод.");
+        output.println("Чтобы подсчитать общую сумму, сразу введите пустую строку.");
+        List<String> categories = new ArrayList<>();
+        while (input.hasNextLine()) {
+            String name = input.nextLine();
+            if (name.isBlank()) {
+                try {
+                    BigDecimal total;
+                    if (categories.isEmpty()) {
+                        total = income ? wallet.totalIncome() : wallet.totalExpenses();
+                    } else {
+                        total = income ? wallet.incomeByCategories(categories) : wallet.expensesByCategories(categories);
+                    }
+                    output.println((income ? "Сумма доходов: " : "Сумма расходов: ") + total.toPlainString());
+                } catch (IllegalArgumentException e) {
+                    output.println(e.getMessage());
+                }
+                return;
+            }
+            categories.add(name);
         }
     }
 

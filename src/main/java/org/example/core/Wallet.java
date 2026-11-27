@@ -2,9 +2,13 @@ package org.example.core;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.function.Function;
 
 public class Wallet {
     private BigDecimal income;
@@ -69,16 +73,45 @@ public class Wallet {
         findCategory(outcomeCategories, name).setBudget(amount);
     }
 
+    public BigDecimal totalIncome() {
+        return income;
+    }
+
+    public BigDecimal totalExpenses() {
+        return outcome;
+    }
+
+    public BigDecimal incomeByCategories(Collection<String> names) {
+        return sumCategories(incomeCategories, names, IncomeCategory::amount);
+    }
+
+    public BigDecimal expensesByCategories(Collection<String> names) {
+        return sumCategories(outcomeCategories, names, OutcomeCategory::spent);
+    }
+
+    private static <T extends Category> BigDecimal sumCategories(
+            Map<String, T> categories, Collection<String> names, Function<T, BigDecimal> amount) {
+        BigDecimal total = BigDecimal.ZERO;
+        Set<String> counted = new HashSet<>();
+        for (String name : names) {
+            T category = findCategory(categories, name);
+            if (counted.add(category.name())) {
+                total = total.add(amount.apply(category));
+            }
+        }
+        return total;
+    }
+
     public String report() {
         StringBuilder report = new StringBuilder();
-        report.append("Общий доход: ").append(income.toPlainString()).append('\n');
+        report.append("Общий доход: ").append(totalIncome().toPlainString()).append('\n');
         report.append("Доходы по категориям:\n");
         for (IncomeCategory category : incomeCategories.values()) {
             report.append('\t').append(category.name()).append(": ")
                     .append(category.amount().toPlainString()).append('\n');
         }
 
-        report.append("Общие расходы: ").append(outcome.toPlainString()).append('\n');
+        report.append("Общие расходы: ").append(totalExpenses().toPlainString()).append('\n');
         report.append("Расходы и бюджеты по категориям:\n");
         for (OutcomeCategory category : outcomeCategories.values()) {
             report.append('\t').append(category.name()).append(": ")
